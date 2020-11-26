@@ -1,0 +1,17 @@
+***************************
+This memo is to explain the step to prepare settings in your PC to use R script 00_TBPCS_pullingOna.R
+Without this preparation, the script will not work!
+***************************
+
+1. Please go to the link below and download JDK into your PC
+
+https://www.oracle.com/technetwork/java/javase/downloads/jdk13-downloads-5672538.html
+
+2. Follow the instruction from
+
+to use unlimited JCE, you must use the files from the link below
+https://www.oracle.com/java/technologies/jce8-downloads.html
+
+and follow the instructions below!
+Mac OS: https://bigdatazone.blogspot.com/2014/01/mac-osx-where-to-put-unlimited-jce-java.html
+WIndows OS: https://dzone.com/articles/install-java-cryptography-extension-jce-unlimited
