@@ -501,6 +501,40 @@ all$cc_conservative <- NA
 all$cc_conservative <- ifelse(all$pct_conservative <= all$threshold & !is.na(all$pct_conservative), 0, all$cc_conservative)
 all$cc_conservative <- ifelse(all$pct_conservative > all$threshold & !is.na(all$pct_conservative), 1, all$cc_conservative)
 
+
+
+#*************************************************
+#  Impoverishment
+#***************************************************/
+# IMPOVERISHMENT INCIDENCE using the PPP$ 1.90/DAY (2011) POVERTY LINE. 
+#Variables: 
+#  income_hh_pre = monthly household income pre-TB
+#hh_members = number of members in the patient's household
+#total_cost_output = total costs using output-based approach (not human capital) for indirect costs and direct costs
+
+#*Step 1: Generating poverty threshold
+all$hhsize <- all$hhsize_a + all$hhsize_c
+all$hhsize <- ifelse(is.na(all$hhsize), median(all$hhsize[!is.na(all$hhsize)], na.rm = T), all$hhsize)
+
+#// Current USD poverty cutoff //
+# definition e.g. for Brazil
+# 1.9 * PPP conversion factor in 2011 (e.g. 1.47BRL/USD) * Consumer price index in 2021 (=187.1) / Consumer price index in 2011 (=106.6) * household size (from survey data)?
+# find the values from https://data.worldbank.org/indicator/FP.CPI.TOTL and https://data.worldbank.org/indicator/PA.NUS.PPP
+all$poverty_threshold_month_PPP <- 1.9 * 30.41 * all$hhsize * 896.07*187.4/112.7 #2011 PPP converter (896.07), * 2019 PCI (187.4)/2011 PCI (112.7) 2011&2019 CPI
+all$poverty_threshold_year_PPP <- all$poverty_threshold_month_PPP*365
+
+#*Step 2: Number of patients below poverty line
+all$below_poverty <- NA
+all$below_poverty <- ifelse(all$income_hh_pre_re < all$poverty_threshold_month_PPP & !is.na(all$income_hh_pre_re), 1, all$below_poverty)
+all$below_poverty <- ifelse(all$income_hh_pre_re >= all$poverty_threshold_month_PPP & !is.na(all$income_hh_pre_re), 0, all$below_poverty)
+
+#*Step 3: Pushed below poverty line after TB
+all$income_hh_pre_annual_reported <- all$income_hh_pre_re*12
+all$below_poverty_after <- NA
+all$below_poverty_after <- ifelse((all$income_hh_pre_annual_reported - all$pct1_num) < all$poverty_threshold_year_PPP & !is.na(all$income_hh_pre_annual_reported), 1, all$below_poverty_after)
+all$below_poverty_after <- ifelse((all$income_hh_pre_annual_reported - all$pct1_num) >= all$poverty_threshold_year_PPP & !is.na(all$income_hh_pre_annual_reported), 0, all$below_poverty_after)
+
+
 #*******************************************************************
 #CONVERT TO USD (vietnam example)
 #Using period average of X between July 24th 2016 and 14 October 2016
@@ -535,7 +569,7 @@ moneyvars <- c("income_pre_re",	"income_hh_pre_re",	"income_hh_pred",	"income_im
 
 #//convert to USD. replace 1 with exchange rate of local currency to USD
 for (i in moneyvars) {
-  all[,paste(i)] <- all[,paste(i)]/2302
+  all[,paste(i)] <- all[,paste(i)]/2307 # use the average value of UNORE: https://treasury.un.org/operationalrates/OperationalRates.php
 }
 
 #//Identify outliers
@@ -544,33 +578,6 @@ for (i in moneyvars) {
 #cap g Z_`var'= (`var' > 6*r(sd)) if `var' < .      
 #list `var' Z_`var' if Z_`var' == 1
 #}
-
-#*************************************************
-#  Impoverishment
-#***************************************************/
-# IMPOVERISHMENT INCIDENCE using the PPP$ 1.90/DAY (2011) POVERTY LINE. 
-#Variables: 
-#  income_hh_pre = monthly household income pre-TB
-#hh_members = number of members in the patient's household
-#total_cost_output = total costs using output-based approach (not human capital) for indirect costs and direct costs
-
-#*Step 1: Generating poverty threshold
-all$hhsize <- all$hhsize_a + all$hhsize_c
-all$hhsize <- ifelse(is.na(all$hhsize), median(all$hhsize[!is.na(all$hhsize)], na.rm = T), all$hhsize)
-
-all$poverty_threshold_month <- 1.9 * 30.41 * all$hhsize
-all$poverty_threshold_year <- 1.9 * 365 * all$hhsize
-
-#*Step 2: Number of patients below poverty line
-all$below_poverty <- NA
-all$below_poverty <- ifelse(all$income_hh_pre_re < all$poverty_threshold_month & !is.na(all$income_hh_pre_re), 1, all$below_poverty)
-all$below_poverty <- ifelse(all$income_hh_pre_re >= all$poverty_threshold_month & !is.na(all$income_hh_pre_re), 0, all$below_poverty)
-
-#*Step 3: Pushed below poverty line after TB
-all$income_hh_pre_annual_reported <- all$income_hh_pre_re*12
-all$below_poverty_after <- NA
-all$below_poverty_after <- ifelse((all$income_hh_pre_annual_reported - all$pct1_num) < all$poverty_threshold_year & !is.na(all$income_hh_pre_annual_reported), 1, all$below_poverty_after)
-all$below_poverty_after <- ifelse((all$income_hh_pre_annual_reported - all$pct1_num) >= all$poverty_threshold_year & !is.na(all$income_hh_pre_annual_reported), 0, all$below_poverty_after)
 
 
 ################################################################################################################
